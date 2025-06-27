@@ -1,0 +1,8 @@
+[package]
+edition = "2021"
+name    = "ates"
+version = "0.1.0"
+
+[[bin]]
+name = "ates"
+path = "./src/bin/main.rs"
