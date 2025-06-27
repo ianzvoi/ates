@@ -1,52 +1,42 @@
 OUTPUT_ARCH(riscv)
 ENTRY(_start)
 
+MEMORY {
+    EXT_DAT : ORIGIN = 0x3C000000, LENGTH = 8M
+    INT_RAM : ORIGIN = 0x3fc80000, LENGTH = 384K
+    ROM_DAT : ORIGIN = 0x3ff00000, LENGTH = 128K
+    ROM_INS : ORIGIN = 0x40000000, LENGTH = 284K
+    INT_INS : ORIGIN = 0x4037C000, LENGTH = 400K
+    EXT_INS : ORIGIN = 0x42000000, LENGTH = 8M
+    RTC     : ORIGIN = 0x50000000, LENGTH = 8K
+    PER     : ORIGIN = 0x60000000, LENGTH = 836K
+}
 
-# MEMORY  MAPPING   CHART
-# ------------------------
-EXT_DAT =      0x3C000000;
-INT_DAT_SRAM = 0x3fc80000;
-INT_INS_SRAM = 0x40000000;
-EXT_INS =      0x42000000;
-INT_DATINS =   0x50000000;
-INT_PHERIP =   0x60000000;
-
-
-
-SECTIONS
-{
-    . = EXT_INS;
-    start = .;
-    .text.magic : {
-        KEEP(*(.text.magic))
-    }
+SECTIONS {
     .text : {
-        stext = .;
-        *(.text.entry)
+        KEEP(*(.magic))
+        *(.text)
         *(.text .text.*)
-        . = ALIGN(4K);
         etext = .;
-    }
+    } > EXT_INS
 
     .rodata : {
         srodata = .;
         *(.rodata .rodata.*)
-        . = ALIGN(4K);
         erodata = .;
-    }
+    } > EXT_DAT
 
     .data : {
         sdata = .;
         *(.data .data.*)
-        . = ALIGN(4K);
         edata = .;
-    }
+    } > INT_RAM
 
     .bss : {
         sbss = .;
         *(.bss .bss.*)
-        . = ALIGN(4K);
         ebss = .;
-    }
+    } > INT_RAM
+
     end = .;
 }
