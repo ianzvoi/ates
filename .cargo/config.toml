@@ -4,6 +4,7 @@ target = "riscv32imac-unknown-none-elf"
 rustflags = ["-C", "link-arg=-Tgeneric.ld",
             "-C","link-arg=--omagic"]
 
+
 [target.riscv32imac-unknown-none-elf]
 runner = """ qemu-system-riscv32
   -cpu rv32
