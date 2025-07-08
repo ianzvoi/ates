@@ -43,7 +43,9 @@ SECTIONS {
   . = . + _stack_size;
   PROVIDE(_init_stack_top = .);
 
+  . = ALIGN(16);
   PROVIDE(_init_heap_bottom = .);
   . = . + _heap_size;
   PROVIDE(_init_heap_top = .);
+
 }

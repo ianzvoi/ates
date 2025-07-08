@@ -3,18 +3,21 @@ use linked_list_allocator::LockedHeap;
 #[global_allocator]
 pub static ALLOCATOR: LockedHeap = LockedHeap::empty();
 
-#[export_name = "__init_heap"]
-extern "C" fn init() {
+pub fn init() {
+    let bottom;
+    let top : *mut u8;
+    
     unsafe {
-        let bottom;
-        let top;
         core::arch::asm!(
             "la {b}, _init_heap_bottom",
-            "la {t}, _init_heap_top",
+            "la {t}, _heap_size",
             b = out(reg) bottom,
             t = out(reg) top,
             options(nomem),
         );
-        ALLOCATOR.lock().init(bottom, top)
+    }
+    
+    unsafe {
+        ALLOCATOR.lock().init(bottom, (top) as usize);
     }
 }
