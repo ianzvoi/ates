@@ -7,8 +7,12 @@
 #### 任务
 内存管理：
     目前借用了linked_list_allocator的实现
+
+
 多线程：
     TODO
+
+
 并发安全：
     TODO
 
