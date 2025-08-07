@@ -1,3 +1,6 @@
+// borrowed from crate LINKEDLISTALLOCTOR
+// TODO rewrite a new one.
+
 use linked_list_allocator::LockedHeap;
 
 #[global_allocator]
