@@ -14,7 +14,7 @@ pub fn start_routing() {
     
     unsafe {
         asm!(
-        "la a0, {sayhi}",
+        "la a0, {itr}",
         "andi a0, a0, 0xFFFFFFFC",
         "csrw mtvec, a0",
 
@@ -27,7 +27,7 @@ pub fn start_routing() {
         "li  a0, 2176",
         "csrs mie, a0",
 
-        sayhi = sym it::it_handler,
+        itr = sym it::it_handler,
         o = out(reg) a,
         )
     }

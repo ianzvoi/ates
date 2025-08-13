@@ -11,7 +11,7 @@ _ns_addr    = 0x10000000;
 /* memory constants */
 _stack_size = 0x1000;
 _heap_size = 0x1000;
-
+_task_stack_size = 0x500;
 
 MEMORY {
   ram  (wxa) : ORIGIN = 0x80000000, LENGTH = 128M
@@ -73,5 +73,11 @@ SECTIONS {
   _init_heap_bottom = .;
   . = . + _heap_size;
   _init_heap_top = .;
+
+  . = ALIGN(16);
+  . = . + _task_stack_size;
+  _task1_debug_stack_top = .;
+
+
 
 }

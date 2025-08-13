@@ -1,3 +1,5 @@
+use alloc::fmt::format;
+use alloc::format;
 use alloc::string::String;
 /** 
 * The entry point 
@@ -15,42 +17,81 @@ use alloc::string::String;
 
 
 
-use core::arch::global_asm;
-use core::fmt::Write;
+use core::arch::{global_asm};
+use core::fmt::Display;
 use crate::{
     power,
     tskman,
     mem,
     uart,
 };
-use crate::uart::Uart;
+use crate::tskman::tsk::{TaskContext, _start_tsk, _switch_forced};
 
 global_asm!(include_str!("boot.s"));
 
+
+
+//TODO global ?
+static  mut next: TaskContext = tskman::tsk::TaskContext::new();
+static  mut sys: TaskContext = tskman::tsk::TaskContext::new();
+
 #[no_mangle]
 extern "C" fn _start_utils() {
-
     uart::init();
-    let mut dbgr = uart::Uart::get();
-    dbgr.write("Serial IO initiated.\n".as_bytes(), 21);
+    tmper_log("Serial IO initiated.");
 
     mem::init();
-    dbgr.write("Allocator initiated.\n".as_bytes(), 21);
+    tmper_log("Allocator initiated.");
 
-    demo(&mut dbgr);
+    // tmper_log("TaskManager initiated.");
+
+    tskman::clint::timer_set(129800);
+
+    tskman::start_routing();
+    for a in 0..0xFF {
+        tmper_log("Waiting for Routing out.");
+    }
+    unsafe {
+        next = tskman::tsk::create_task(say_hello_tsk);
+    }
     
-    tskman::init();
-    dbgr.write("TaskManager initiated\n".as_bytes(), 22);
+    tmper_log("sys recursion");
+    say_hello(10);
+
+    unsafe {
+        tmper_log("tsk recursion");
+        _start_tsk(&raw mut sys, &raw const next);
+    }
+
+    tmper_log("After all those wonderfully weird things, you are back to sys");
     
     
     power::shutdown();
 }
 
-fn demo(port : &mut Uart) {
-    use alloc::string;
-    let q = string::String::from("----------\nAllocator Test\n----------\n");
-    for q in q.chars() {
-        port.writec(q as u8);
-    }
+
+
+
+fn tmper_log(p : &str){
+    uart::Uart::get().write(b"[info] ",7);
+    uart::Uart::get().write(p.as_bytes(), p.len());
+    uart::Uart::get().writec('\n' as u8);
 }
 
+fn say_hello(recursion : u32) {
+    if recursion <= 0 {
+        
+        return;
+    }
+    let local_var : u32 = 0;
+    let p = format!("{:X}", &local_var as *const u32 as usize);
+    tmper_log(p.as_str());
+    say_hello(recursion - 1);
+}
+
+fn say_hello_tsk() {
+    say_hello(12);
+    unsafe {
+        _switch_forced(&raw mut next, &raw const sys);
+    }
+}
