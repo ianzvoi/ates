@@ -25,6 +25,7 @@ use crate::{
     mem,
     uart,
 };
+
 use crate::tskman::tsk::{TaskContext, _start_tsk, _switch_forced};
 
 global_asm!(include_str!("boot.s"));
@@ -45,7 +46,9 @@ extern "C" fn _start_utils() {
 
     // tmper_log("TaskManager initiated.");
 
-
+    
+    
+    
     tskman::start_routing();
 
 
@@ -79,18 +82,16 @@ fn tmper_log(p : &str){
 }
 
 fn say_hello(recursion : u32) {
-    if recursion <= 0 {
-        
-        return;
-    }
+    if recursion <= 0 { return; };
     let local_var : u32 = 0;
-    let p = format!("{:X}", &local_var as *const u32 as usize);
+    let p = format!("Stack Variable at {:X}", &local_var as *const u32 as usize);
+    tmper_log(format!("time: {}",unsafe{*tskman::clint::_get_mtime()}).as_str());
     tmper_log(p.as_str());
     say_hello(recursion - 1);
 }
 
 fn say_hello_tsk() {
-    for i in 0..100 {
+    for i in 0..10000 {
         say_hello(5);
     }
     tmper_log("Terminated.");

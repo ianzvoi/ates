@@ -1,6 +1,12 @@
     .section .text
-    .global _timer_start
-_timer_start:
-    la t0, 0x2000000
-    sb t1, (t0)
+
+    .global _get_mtime
+_get_mtime:
+    la a0, 0x200BFF8
     ret
+
+    .global _get_mtimecmpr
+_get_mtimecmpr:
+    la a0, 0x2004000
+    ret
+   
