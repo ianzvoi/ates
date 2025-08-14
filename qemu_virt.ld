@@ -5,13 +5,16 @@ ENTRY(_start)
 
 /* devices addresses */
 _clint_addr = 0x2000000;
+_clint_mtimecmpr = 0x2004000;
+_clinr_mtime = 0x200BFF8;
+
 _ns_addr    = 0x10000000;
 
 
 /* memory constants */
 _stack_size = 0x1000;
 _heap_size = 0x1000;
-_task_stack_size = 0x500;
+_task_stack_size = 0x1000;
 
 MEMORY {
   ram  (wxa) : ORIGIN = 0x80000000, LENGTH = 128M
@@ -32,9 +35,9 @@ SECTIONS {
   .text : {
     *(.text.init)
 
-    . = ALIGN(8);
+    . = ALIGN(0x40);
     *(.text.it)
-
+    . = ALIGN(0x10);
     *(.text .text.*)
 
   } >ram AT> ram :text
@@ -73,6 +76,18 @@ SECTIONS {
   _init_heap_bottom = .;
   . = . + _heap_size;
   _init_heap_top = .;
+
+  . = . + 16;
+  . = ALIGN(16);
+  . = . + _task_stack_size;
+  _tcb_debug_head = .;
+  . = . + _task_stack_size;
+
+
+  . = ALIGN(16);
+  . = . + _task_stack_size;
+  _int_handler_stack_top = .;
+
 
   . = ALIGN(16);
   . = . + _task_stack_size;

@@ -17,7 +17,7 @@ use alloc::string::String;
 
 
 
-use core::arch::{global_asm};
+use core::arch::{asm, global_asm};
 use core::fmt::Display;
 use crate::{
     power,
@@ -32,8 +32,8 @@ global_asm!(include_str!("boot.s"));
 
 
 //TODO global ?
-static  mut next: TaskContext = tskman::tsk::TaskContext::new();
-static  mut sys: TaskContext = tskman::tsk::TaskContext::new();
+static  mut NEXT: TaskContext = tskman::tsk::TaskContext::new();
+static  mut SYS: TaskContext = tskman::tsk::TaskContext::new();
 
 #[no_mangle]
 extern "C" fn _start_utils() {
@@ -45,27 +45,27 @@ extern "C" fn _start_utils() {
 
     // tmper_log("TaskManager initiated.");
 
-    tskman::clint::timer_set(129800);
 
     tskman::start_routing();
-    for a in 0..0xFF {
-        tmper_log("Waiting for Routing out.");
-    }
+
+
     unsafe {
-        next = tskman::tsk::create_task(say_hello_tsk);
+        NEXT = tskman::tsk::create_task(say_hello_tsk);
     }
-    
-    tmper_log("sys recursion");
+
+    tmper_log("SYS recursion");
     say_hello(10);
 
     unsafe {
         tmper_log("tsk recursion");
-        _start_tsk(&raw mut sys, &raw const next);
+        _start_tsk(&raw mut SYS, &raw const NEXT);
     }
 
-    tmper_log("After all those wonderfully weird things, you are back to sys");
-    
-    
+
+    tskman::stop_routing();
+
+
+    tmper_log("After all those wonderfully weird things, you are back to SYS");
     power::shutdown();
 }
 
@@ -90,8 +90,12 @@ fn say_hello(recursion : u32) {
 }
 
 fn say_hello_tsk() {
-    say_hello(12);
-    unsafe {
-        _switch_forced(&raw mut next, &raw const sys);
+    for i in 0..100 {
+        say_hello(5);
     }
+    tmper_log("Terminated.");
+    unsafe {
+        _switch_forced(&raw mut NEXT, &raw const SYS);
+    }
+    tmper_log("Unreachable.");
 }

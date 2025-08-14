@@ -1,5 +1,5 @@
 pub(crate) mod clint;
-mod it;
+pub(crate) mod ITH;
 pub(crate) mod tsk;
 
 
@@ -10,33 +10,42 @@ use crate::uart;
 
 
 pub fn start_routing() {
-    let mut a = 0;
-    
+
     unsafe {
         asm!(
-        "la a0, {itr}",
-        "andi a0, a0, 0xFFFFFFFC",
+        "la t1, _clinr_mtime",
+        "lw t0, (t1)",
+
+        "add t0, t0, {}",
+
+        "la t1, _clint_mtimecmpr",
+        "sw t0, (t1)",
+        in(reg) 100000
+        );
+    }
+
+    unsafe {
+        asm!(
+        "la a0, _it_handler",
         "csrw mtvec, a0",
 
-        "csrsi  mstatus, 8",
-        
-        "la a0, 0x80050000",
+
+        "la a0, _tcb_debug_head",
         "csrw  mscratch, a0",
-        "mv a0, {o}",
 
-        "li  a0, 2176",
-        "csrs mie, a0",
+        "li   t0, 0x80",
+        "csrs mie, t0",
 
-        itr = sym it::it_handler,
-        o = out(reg) a,
+        "csrsi  mstatus, 0x8",
         )
     }
-    
-    if (a > 0){
-        uart::Uart::get().writec('s' as u8);
-    }
+}
 
-    unsafe{ 
-        //  clint::timer_start();
+
+pub fn stop_routing() {
+    unsafe {
+        asm!(
+            "csrci mstatus, 0x8",
+        );
     }
 }

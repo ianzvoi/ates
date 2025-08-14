@@ -5,11 +5,12 @@ rustflags = [
     "-C", "link-arg=--omagic"
 ]
 
-
+# needed to enable "C(ompressed)" extension for ECLIC interrupt to
+# auto adjust +2 or +4 for mepc when thee
 [target.riscv32imac-unknown-none-elf]
 runner = """
 qemu-system-riscv32
-  -cpu rv32
+  -cpu rv32,c=true
   -machine virt
   -m 150M
   -s

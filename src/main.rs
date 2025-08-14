@@ -8,6 +8,7 @@
 
 extern crate alloc;
 
+use alloc::string::ToString;
 use crate::uart::Uart;
 
 mod uart;
@@ -24,10 +25,15 @@ fn test(_test: &[&i32]) {
     loop{}
 }
 
-
+fn tmper_log(p : &str){
+    uart::Uart::get().write(b"[sync] ",7);
+    uart::Uart::get().write(p.as_bytes(), p.len());
+    uart::Uart::get().writec('\n' as u8);
+}
 #[panic_handler]
 /// hit when panic happens
-fn panic_handler(_: &core::panic::PanicInfo) -> ! {
+fn panic_handler(useful: &core::panic::PanicInfo) -> ! {
+    tmper_log(useful.to_string().as_str());
     loop {}
 }
 
