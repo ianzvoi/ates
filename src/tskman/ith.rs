@@ -4,7 +4,7 @@ use core::arch::{asm, global_asm, naked_asm};
 use core::ptr::write;
 use crate::uart;
 
-global_asm!(include_str!("./ITH.s"));
+global_asm!(include_str!("./ith.s"));
 
 
 
@@ -21,6 +21,7 @@ pub unsafe extern "C" fn it_handler() {
     );
 
     if (reason & 0b10000000000000000000000000000000u32) == 0 {
+        // Exception
         let mut mepc: u32;
         let mut mstatus: u32;
         let mut mtval: u32;
@@ -32,10 +33,11 @@ pub unsafe extern "C" fn it_handler() {
             mepc = out(reg) mepc,
             mstatus = out(reg) mstatus
         );
-
         // can't use dynamic allocation to debug here.
         loop {}
+        
     } else {
+        // Interrupt
         if (reason & 0b111u32) == 0b111u32 {
             asm!(
                 "la t1, _clinr_mtime",
@@ -46,5 +48,6 @@ pub unsafe extern "C" fn it_handler() {
                 delta = in(reg) INT_INTERVAL
             );
         }
+        
     }
 }
