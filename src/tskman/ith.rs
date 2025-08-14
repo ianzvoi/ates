@@ -1,8 +1,6 @@
-use alloc::fmt::format;
-use alloc::format;
-use core::arch::{asm, global_asm, naked_asm};
-use core::ptr::write;
-use crate::uart;
+use core::arch::{asm, global_asm};
+use core::task::Poll::Ready;
+use crate::tskman::{tsk, TaskControlBlock, READY};
 
 global_asm!(include_str!("./ith.s"));
 
@@ -10,7 +8,13 @@ global_asm!(include_str!("./ith.s"));
 
 static INT_INTERVAL: usize = 1000;
 
+extern "C" {
+    fn _swap_context( next : *const TaskControlBlock);
+}
 
+
+
+static mut curr_id : usize = 0;
 
 #[no_mangle]
 pub unsafe extern "C" fn it_handler() {
@@ -35,10 +39,24 @@ pub unsafe extern "C" fn it_handler() {
         );
         // can't use dynamic allocation to debug here.
         loop {}
-        
+
     } else {
         // Interrupt
         if (reason & 0b111u32) == 0b111u32 {
+
+            asm!(
+                "csrr t0,  mscratch",
+                "csrr t1,  mepc",
+                "sw   t1,  136(t0)",
+            
+                "lw   t0,  140(t0)",
+            
+                "lw   t1,  136(t0)",
+            
+                "csrw mscratch, t0",
+                "csrw mepc, t1"
+            );
+            
             asm!(
                 "la t1, _clinr_mtime",
                 "lw t0, (t1)",
@@ -47,7 +65,7 @@ pub unsafe extern "C" fn it_handler() {
                 "sw t0, (t1)",
                 delta = in(reg) INT_INTERVAL
             );
+            
         }
-        
     }
 }

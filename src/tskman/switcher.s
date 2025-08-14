@@ -61,15 +61,7 @@ _load_tsk:
     ret
 
 
-#create a task with a task stack
-# stack    a0
-# entrance a1
-# task     a2
-    .global _create_tsk
-_create_tsk:
-    sw a0,  (a2)
-    sw a1, 4(a2) #todo INCORRECT
-    ret
+
 
 
     .global _start_tsk

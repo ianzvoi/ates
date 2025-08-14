@@ -26,18 +26,15 @@ use crate::{
     uart,
 };
 
-use crate::tskman::tsk::{TaskContext, _start_tsk, _switch_forced};
 
 global_asm!(include_str!("boot.s"));
 
 
 
 //TODO global ?
-static  mut NEXT: TaskContext = tskman::tsk::TaskContext::new();
-static  mut SYS: TaskContext = tskman::tsk::TaskContext::new();
 
 #[no_mangle]
-extern "C" fn _start_utils() {
+extern "C" fn _start_utils() -> !{
     uart::init();
     tmper_log("Serial IO initiated.");
 
@@ -46,29 +43,38 @@ extern "C" fn _start_utils() {
 
     // tmper_log("TaskManager initiated.");
 
-    
-    
-    
+    let stack1 : u32;
+    let stack2 : u32;
+    let stack3 : u32;
+    let stack4 : u32;
+
+    unsafe {
+        asm!(
+            "la {}, _task1_debug_stack_top",
+            "la {}, _task2_debug_stack_top",
+            "la {}, _task3_debug_stack_top",
+            "la {}, _task4_debug_stack_top",
+
+            out(reg) stack1,
+            out(reg) stack2,
+            out(reg) stack3,
+            out(reg) stack4,
+        )
+    }
+
+    tskman::create_task(say_hello_tsk,stack1,12);
+    tskman::create_task(say_hello_tsk,stack2,12);
+    tskman::create_task(say_hello_tsk,stack4,12);
+    tskman::create_task(say_hello_tsk,stack3,12);
+
     tskman::start_routing();
+    
+    // for i in 0..1000 {
+    //     say_hello(12);
+    // }
+    // tskman::run(0);
 
 
-    unsafe {
-        NEXT = tskman::tsk::create_task(say_hello_tsk);
-    }
-
-    tmper_log("SYS recursion");
-    say_hello(10);
-
-    unsafe {
-        tmper_log("tsk recursion");
-        _start_tsk(&raw mut SYS, &raw const NEXT);
-    }
-
-
-    tskman::stop_routing();
-
-
-    tmper_log("After all those wonderfully weird things, you are back to SYS");
     power::shutdown();
 }
 
@@ -83,20 +89,16 @@ fn tmper_log(p : &str){
 
 fn say_hello(recursion : u32) {
     if recursion <= 0 { return; };
-    let local_var : u32 = 0;
-    let p = format!("Stack Variable at {:X}", &local_var as *const u32 as usize);
-    tmper_log(format!("time: {}",unsafe{*tskman::clint::_get_mtime()}).as_str());
+    let p = format!("Recusion {}", recursion as usize);
+    // for i in 0..1000000 {}
     tmper_log(p.as_str());
     say_hello(recursion - 1);
 }
 
 fn say_hello_tsk() {
-    for i in 0..10000 {
-        say_hello(5);
-    }
+    say_hello(5);
+    
+    tmper_log(format!("time: {}",unsafe{*tskman::clint::_get_mtime()}).as_str());
     tmper_log("Terminated.");
-    unsafe {
-        _switch_forced(&raw mut NEXT, &raw const SYS);
-    }
-    tmper_log("Unreachable.");
+    // power::shutdown();
 }

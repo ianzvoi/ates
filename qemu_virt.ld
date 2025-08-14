@@ -66,7 +66,10 @@ SECTIONS {
   } >ram AT> ram :bss
 
 
-
+  . = ALIGN(16);
+  . = . + _task_stack_size;
+  _int_handler_stack_top = .;
+  
   . = ALIGN(16);
   . = . + _stack_size;
   _init_stack_top = .;
@@ -77,22 +80,22 @@ SECTIONS {
   . = . + _heap_size;
   _init_heap_top = .;
 
-  . = . + 16;
-  . = ALIGN(16);
-  . = . + _task_stack_size;
-  _tcb_debug_head = .;
-  . = . + _task_stack_size;
-
-
-  . = ALIGN(16);
-  . = . + _task_stack_size;
-  _int_handler_stack_top = .;
-
 
   . = ALIGN(16);
   . = . + _task_stack_size;
   _task1_debug_stack_top = .;
 
-
+  . = ALIGN(16);
+  . = . + _task_stack_size;
+  _task2_debug_stack_top = .;
+  
+  
+  . = ALIGN(16);
+  . = . + _task_stack_size;
+  _task3_debug_stack_top = .;
+  
+  . = ALIGN(16);
+  . = . + _task_stack_size;
+  _task4_debug_stack_top = .;
 
 }
