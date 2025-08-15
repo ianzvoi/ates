@@ -38,7 +38,7 @@ extern "C" {
 
 
 
-pub fn create_task(entry : fn(), stack : u32, tid : u32) {
+pub fn create_task(entry : fn(), stack : u32) {
     let newtsk = TaskControlBlock{
         task_context : TaskContext::new(),
         entry : entry as u32, //124

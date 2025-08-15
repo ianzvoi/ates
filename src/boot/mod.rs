@@ -62,10 +62,10 @@ extern "C" fn _start_utils() -> !{
         )
     }
 
-    tskman::create_task(say_hello_tsk,stack1,12);
-    tskman::create_task(say_hello_tsk,stack2,12);
-    tskman::create_task(say_hello_tsk,stack4,12);
-    tskman::create_task(say_hello_tsk,stack3,12);
+    tskman::create_task(say_hello_tsk,stack1);
+    tskman::create_task(say_hello_tsk,stack2);
+    tskman::create_task(say_hello_tsk,stack4);
+    tskman::create_task(say_hello_tsk,stack3);
 
     tskman::start_routing();
     

@@ -14,7 +14,6 @@ extern "C" {
 
 
 
-static mut curr_id : usize = 0;
 
 #[no_mangle]
 pub unsafe extern "C" fn it_handler() {
