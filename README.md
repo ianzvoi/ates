@@ -18,6 +18,7 @@
 并发安全：
 
     TODO
+    *(事实上，linked_list_allocator已经内置了一个回旋锁了)
 
 
 #### 依赖
