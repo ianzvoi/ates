@@ -20,6 +20,10 @@
     TODO
     *(事实上，linked_list_allocator已经内置了一个回旋锁了)
 
+#### TODO
+
+- 让Task可以拥有单独的堆
+- 实现信号量
 
 #### 依赖
 - rust nightly 
