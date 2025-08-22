@@ -1,30 +1,16 @@
-use alloc::fmt::format;
+//! # The entry point
+//!
+//! `_start` :
+//! init gp, init sp call _start_utils
+//!
+//! `_start_utils` :
+//! init serial port,
+//!    init allocator,
+//!   init task manager,
+
 use alloc::format;
-use alloc::string::String;
-/** 
-* The entry point 
-* _start & _start_utils
-* are declared here:
-*
-* _start : 
-*    init gp, init sp call _start_utils
-*
-* _start_utils :
-*    init serial port,
-*    init allocator,
-*    init task manager,
-*/
-
-
-
 use core::arch::{asm, global_asm};
-use core::fmt::Display;
-use crate::{
-    power,
-    tskman,
-    mem,
-    uart,
-};
+use crate::{dev::power, dev::uart, tasks, mem, dev};
 
 
 global_asm!(include_str!("boot.s"));
@@ -62,19 +48,13 @@ extern "C" fn _start_utils() -> !{
         )
     }
 
-    tskman::create_task(say_hello_tsk,stack1);
-    tskman::create_task(say_hello_tsk,stack2);
-    tskman::create_task(say_hello_tsk,stack4);
-    tskman::create_task(say_hello_tsk,stack3);
+    tasks::create_task(say_hello_tsk,stack1);
+    tasks::create_task(say_hello_tsk,stack2);
+    tasks::create_task(say_hello_tsk,stack4);
+    tasks::create_task(say_hello_tsk,stack3);
 
-    tskman::start_routing();
+    tasks::start_routing();
     
-    // for i in 0..1000 {
-    //     say_hello(12);
-    // }
-    // tskman::run(0);
-
-
     power::shutdown();
 }
 
@@ -98,7 +78,7 @@ fn say_hello(recursion : u32) {
 fn say_hello_tsk() {
     say_hello(5);
     
-    tmper_log(format!("time: {}",unsafe{*tskman::clint::_get_mtime()}).as_str());
+    tmper_log(format!("time: {}",unsafe{*dev::clint::_get_mtime()}).as_str());
     tmper_log("Terminated.");
     // power::shutdown();
 }

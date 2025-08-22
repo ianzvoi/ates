@@ -84,10 +84,3 @@ _it_handler:
     lw a7,   120(a0)
     lw a0,    92(a0)
     mret
-
-
-
-    .section .text
-    .global _swap_context
- _swap_context:
-    csrw mscratch, a0

@@ -1,19 +1,17 @@
-pub(crate) mod clint;
 mod ith;
-mod tsk;
+mod task;
+mod coop;
+mod itctrl;
 
 use alloc::collections::VecDeque;
 use core::arch::{asm, global_asm};
-use core::task::Poll::Ready;
-use crate::tskman::tsk::TaskContext;
-use crate::{power, uart};
-use crate::uart::Uart;
+use crate::tasks::task::{TaskContext};
 
 #[repr(C)]
 struct TaskControlBlock {
     task_context: TaskContext,
-    /// default to &task_exit_handler as *const u8 as u64;
     entry : u32,
+    /// default to &task_exit_handler
     return_addr : u32,
     stack  : u32,
     pc   : u32,
@@ -21,17 +19,16 @@ struct TaskControlBlock {
 }
 
 
-
-
 static mut READY : VecDeque<TaskControlBlock> = VecDeque::new();
 
 
 
-global_asm!(include_str!("tskman.s"));
+global_asm!(include_str!("tasks.s"));
 
 extern "C" {
     fn _taskman_sync (target : * mut TaskControlBlock);
-    fn _run (target : * const TaskControlBlock);
+
+    fn _run (target : * const TaskControlBlock) -> !;
     
     fn task_exit_handler();
 }
@@ -96,11 +93,3 @@ pub fn start_routing() {
     }
 }
 
-
-pub fn stop_routing() {
-    unsafe {
-        asm!(
-            "csrci mstatus, 0x8",
-        );
-    }
-}

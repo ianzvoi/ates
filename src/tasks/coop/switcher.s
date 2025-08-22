@@ -25,7 +25,10 @@ _sw_store:
 
 
 # this function (kinda of) is CALLED at appropriate position,
-# only register s0 - s11 is needed to be saved.
+# register sp s0 - s11 is needed to be saved,
+# t0-t7, a0-a7 is stored by caller.
+# ra points to the ret point for current task.
+
     .global _switch_forced
 _switch_forced:
 _save_tsk:
