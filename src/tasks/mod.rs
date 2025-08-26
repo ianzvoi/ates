@@ -2,6 +2,7 @@ mod ith;
 mod task;
 mod coop;
 mod itctrl;
+pub mod locks;
 
 use alloc::collections::VecDeque;
 use core::arch::{asm, global_asm};
