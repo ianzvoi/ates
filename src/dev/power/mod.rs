@@ -1,10 +1,10 @@
 //! # Power management utilities
 //! In Qemu, no complicated power management is needed.
 //! send 3 magic word to terminate qemu process.
-//! 
+//!
 //!  qemu will intercept the write instruction to address 0x100000 and check if it is
 //!  one of these magic words:
-//! 
+//!
 //!     reset     - 0x7777
 //!     power off - 0x5555
 //!     fial      - 0x3333  (qemu should quit with none-zero return value.)
