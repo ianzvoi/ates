@@ -9,8 +9,9 @@
 //!   init task manager,
 
 use alloc::format;
+use alloc::string::String;
 use core::arch::{asm, global_asm};
-use crate::{dev::power, dev::uart, tasks, mem, dev};
+use crate::{dev::power, dev::uart, tasks, mem, dev, naive_lock, naive_unlock, naive};
 
 
 global_asm!(include_str!("boot.s"));
@@ -22,10 +23,10 @@ global_asm!(include_str!("boot.s"));
 #[no_mangle]
 extern "C" fn _start_utils() -> !{
     uart::init();
-    tmper_log("Serial IO initiated.");
+    // tmper_log("Serial IO initiated.");
 
     mem::init();
-    tmper_log("Allocator initiated.");
+    // tmper_log("Allocator initiated.");
 
     // tmper_log("TaskManager initiated.");
 
@@ -40,7 +41,6 @@ extern "C" fn _start_utils() -> !{
             "la {}, _task2_debug_stack_top",
             "la {}, _task3_debug_stack_top",
             "la {}, _task4_debug_stack_top",
-
             out(reg) stack1,
             out(reg) stack2,
             out(reg) stack3,
@@ -54,31 +54,38 @@ extern "C" fn _start_utils() -> !{
     tasks::create_task(say_hello_tsk,stack3);
 
     tasks::start_routing();
-    
+
     power::shutdown();
 }
 
 
+use crate::tasks::locks::naive::{NaiveLock};
 
 
-fn tmper_log(p : &str){
-    uart::Uart::get().write(b"[info] ",7);
+
+naive!(LOG_LOCK);
+fn tmper_log(p : &String){
+    naive_lock!(LOG_LOCK);
+
+    uart::Uart::get().write(b"[info] ", 7);
     uart::Uart::get().write(p.as_bytes(), p.len());
     uart::Uart::get().writec('\n' as u8);
+
+    naive_unlock!(LOG_LOCK);
 }
 
 fn say_hello(recursion : u32) {
     if recursion <= 0 { return; };
     let p = format!("Recusion {}", recursion as usize);
     // for i in 0..1000000 {}
-    tmper_log(p.as_str());
+    tmper_log(&p);
     say_hello(recursion - 1);
 }
 
 fn say_hello_tsk() {
     say_hello(5);
     
-    tmper_log(format!("time: {}",unsafe{*dev::clint::_get_mtime()}).as_str());
-    tmper_log("Terminated.");
+    tmper_log(&format!("time: {}",unsafe{*dev::clint::_get_mtime()}));
+    tmper_log(&String::from("Terminated."));
     // power::shutdown();
 }
