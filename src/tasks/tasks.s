@@ -13,6 +13,7 @@ _run:
     lw ra, 128(a0)
     lw sp, 132(a0)
     lw t0, 124(a0)
+    csrsi  mstatus, 0x8
     jalr zero,t0,0
     
     
