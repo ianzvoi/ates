@@ -7,7 +7,7 @@ pub mod locks;
 use alloc::collections::VecDeque;
 use core::arch::{asm, global_asm};
 use crate::tasks::csr::mie::{csr_mie_set,MIE_TIMER_INT};
-
+use crate::tasks::csr::mscratch::csr_mscratch_write;
 
 #[repr(C)]
 struct Registers {
@@ -33,11 +33,21 @@ static mut READY : VecDeque<TaskControlBlock> = VecDeque::new();
 global_asm!(include_str!("tasks.s"));
 
 extern "C" {
+    /// ## helper functon of TCB construction.
+    /// TODO: badcode.
     fn _taskman_sync (target : * mut TaskControlBlock);
 
+
+    /// ## Jump to task by TaskControlBolck
+    /// - Eable global interrupt.
+    /// - Jump directly to target task.
+    ///
+    /// never return.
     fn _run (target : * const TaskControlBlock) -> !;
-    
-    fn task_exit_handler();
+
+    /// ## default exit point for tasks.
+    /// functions with no `ra`, never return.
+    fn task_exit_handler() -> !;
 }
 
 
@@ -52,6 +62,7 @@ pub fn create_task(entry : fn(), stack : u32) {
         next: 0  // 140
     };
 
+    //TODO: badcode.
     unsafe{
         READY.push_back(newtsk);
         READY[READY.len()-1].next = &READY[0] as *const TaskControlBlock as u32;
@@ -89,11 +100,7 @@ pub fn start_routing() {
     csr_mie_set!(MIE_TIMER_INT);
 
     unsafe {
-        asm!(
-        "csrw mscratch, {}",
-        "csrsi  mstatus, 0x8",
-        in(reg) &READY[0]
-        );
+        csr_mscratch_write!(&READY[0]);
         _run(&READY[0])
     }
 }
