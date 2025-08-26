@@ -11,7 +11,7 @@
 use alloc::format;
 use alloc::string::String;
 use core::arch::{asm, global_asm};
-use crate::{dev::power, dev::uart, tasks, mem, dev, naive_lock, naive_unlock, naive};
+use crate::{dev::power, dev::uart, tasks, mem, dev};
 
 
 global_asm!(include_str!("boot.s"));
@@ -63,15 +63,15 @@ use crate::tasks::locks::naive::{NaiveLock};
 
 
 
-naive!(LOG_LOCK);
+crate::tasks::locks::naive::naive!(LOG_LOCK);
 fn tmper_log(p : &String){
-    naive_lock!(LOG_LOCK);
+    tasks::locks::naive::naive_lock!(LOG_LOCK);
 
     uart::Uart::get().write(b"[info] ", 7);
     uart::Uart::get().write(p.as_bytes(), p.len());
     uart::Uart::get().writec('\n' as u8);
 
-    naive_unlock!(LOG_LOCK);
+    tasks::locks::naive::naive_unlock!(LOG_LOCK);
 }
 
 fn say_hello(recursion : u32) {

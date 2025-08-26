@@ -3,6 +3,7 @@
 #![no_std]
 #![test_runner(test)]
 #![feature(custom_test_frameworks)]
+#![feature(decl_macro)]
 extern crate alloc;
 
 use alloc::string::ToString;
