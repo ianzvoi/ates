@@ -1,16 +1,22 @@
 mod ith;
-mod task;
 mod coop;
-mod itctrl;
+#[macro_use]
+mod csr;
 pub mod locks;
 
 use alloc::collections::VecDeque;
 use core::arch::{asm, global_asm};
-use crate::tasks::task::{TaskContext};
+use crate::tasks::csr::mie::{csr_mie_set,MIE_TIMER_INT};
+
+
+#[repr(C)]
+struct Registers {
+    reg : [u32; 31],
+}
 
 #[repr(C)]
 struct TaskControlBlock {
-    task_context: TaskContext,
+    task_context: Registers,
     entry : u32,
     /// default to &task_exit_handler
     return_addr : u32,
@@ -38,7 +44,7 @@ extern "C" {
 
 pub fn create_task(entry : fn(), stack : u32) {
     let newtsk = TaskControlBlock{
-        task_context : TaskContext::new(),
+        task_context : Registers { reg:[0; 31] } ,
         entry : entry as u32, //124
         return_addr: task_exit_handler as u32, //128
         stack, // 132
@@ -77,17 +83,15 @@ pub fn start_routing() {
         asm!(
             "la t0, _it_handler",
             "csrw mtvec, t0",
-
-            "li   t0, 0x80",
-            "csrs mie, t0",
-
-            "csrsi  mstatus, 0x8",
         )
     }
+
+    csr_mie_set!(MIE_TIMER_INT);
 
     unsafe {
         asm!(
         "csrw mscratch, {}",
+        "csrsi  mstatus, 0x8",
         in(reg) &READY[0]
         );
         _run(&READY[0])
