@@ -1,30 +1,53 @@
 # Riscv Rust Rtos
 
 ### 介绍
-在qemu的virt虚拟机上实现
-具有内存管理的多线程RTOS
+在**R**iscv架构的`qemu-virt32`虚拟机上运行的,
+使用**R**ust编写的**R**TOS.
+
+
 
 #### 任务
-内存管理：
+##### Boot Loader:
+* 目前, 此程序作为qemu的bios固件启动.(搬到物理机上则需要和具体的bootloader打交道)
 
-    目前借用了linked_list_allocator的实现
-
-
-多线程：
-
-    通过系统的定时器中断进行平均线程调度
+##### 内存管理：
+* **TODO**:(目前暂时借用`linked_list_allocator`第三方Crate的实现.)
 
 
-并发安全：
+##### 多线程：
+* 系统的定时器等时间间隔中断, 抢占线程调度.
+* 协作进程调度(**TODO**:协作调度的调度器.)
 
-    TODO
-    *(事实上，linked_list_allocator已经内置了一个回旋锁了)
 
-#### TODO
+##### 并发安全：
+* 一个 Naive Lock (回旋锁)
+* **TODO**:(取代`linked_list_allocator`第三方Crate内置回旋锁.)
 
-- 让Task可以拥有单独的堆
-- 实现信号量
 
-#### 依赖
-- rust nightly 
-- rust riscv32imac-unknown-none-elf 构建工具
+
+
+
+#### More **TODO**s
+
+[//]: # (期望目标)
+- 让Task可以拥有单独的堆.
+- 实现信号量.
+- 让 `naive_lock` 可被动态分配.
+- 移植到 xuantieC910 物理机上. 
+
+[//]: # (额外目标)
+- 移植到 ESP32-C3 物理机上(由于硬件差异很大，可能不会在这个仓库里)
+- 虚拟内存与内存分页 (RTOS不一定需要这个，但是可以尝试实现.)
+- 试着复现 XuantieC910 CPU 的 Ghostwrite 漏洞(~~如果到这一天时还可以买到带有这样严重漏洞的芯片~~).
+- 文件系统.
+
+
+
+
+
+#### 版本 & 依赖
+- Rust 版本:
+`nightly`
+
+- Rust 构建工具: 
+`riscv32imac-unknown-none-elf` 
