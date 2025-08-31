@@ -9,10 +9,10 @@
 //!   init task manager,
 
 use alloc::format;
-use alloc::string::String;
+use alloc::string::{String};
 use core::arch::{asm, global_asm};
 use crate::{dev::power, dev::uart, tasks, mem, dev};
-
+use crate::dev::uart::Uart;
 
 global_asm!(include_str!("boot.s"));
 
@@ -34,14 +34,8 @@ extern "C" fn _start_utils() -> !{
     let stack2 : u32;
     let stack3 : u32;
     let stack4 : u32;
-    
-    loop {
-        let w = uart::Uart::get().readc();
-        uart::Uart::get().writec(w);
-        if(w == 'y' as u8){
-            break;
-        }
-    }
+
+
 
     unsafe {
         asm!(
@@ -56,10 +50,8 @@ extern "C" fn _start_utils() -> !{
         )
     }
 
-    tasks::create_task(say_hello_tsk,stack1);
-    tasks::create_task(say_hello_tsk,stack2);
-    tasks::create_task(say_hello_tsk,stack4);
-    tasks::create_task(say_hello_tsk,stack3);
+    tasks::create_task(renderer,stack1);
+    tasks::create_task(hjk_task,stack3);
 
     tasks::start_routing();
 
@@ -67,11 +59,10 @@ extern "C" fn _start_utils() -> !{
 }
 
 
-use crate::tasks::locks::naive::{NaiveLock};
+use crate::tasks::locks::naive::{naive_lock, naive_unlock, NaiveLock};
 
 
 
-crate::tasks::locks::naive::naive!(LOG_LOCK);
 fn tmper_log(p : &String){
     tasks::locks::naive::naive_lock!(LOG_LOCK);
 
@@ -82,18 +73,54 @@ fn tmper_log(p : &String){
     tasks::locks::naive::naive_unlock!(LOG_LOCK);
 }
 
-fn say_hello(recursion : u32) {
-    if recursion <= 0 { return; };
-    let p = format!("Recusion {}", recursion as usize);
-    // for i in 0..1000000 {}
-    tmper_log(&p);
-    say_hello(recursion - 1);
+
+crate::tasks::locks::naive::naive!(LOG_LOCK);
+
+static mut PO : i32 = 12;
+static MOTS: [&str; 4] = ["howdy","snoop!","Galonbo!","bonjour."];
+
+static mut RENDER_MOT : i32 = 0;
+fn renderer() {
+    loop{
+        unsafe {
+            let cPO = PO;
+
+
+
+            let mut s : String = String::from("");
+            for i in 0..cPO {
+                s.push('.');
+            }
+            s.push('#');
+            for i in cPO..100 {
+                s.push('.');
+            }
+
+            let wors = format!("{}[?25l[{:3}][{}][{:10}][{:4}]",0o33 as char, cPO,s,MOTS[(RENDER_MOT / 1000) as usize],RENDER_MOT);
+            Uart::get().write(wors.as_bytes(), wors.len());
+
+            RENDER_MOT = (RENDER_MOT + 1) % 4000;
+
+            Uart::get().writec('\r' as u8);
+        }
+    }
 }
 
-fn say_hello_tsk() {
-    say_hello(5);
-    
-    tmper_log(&format!("time: {}",unsafe{*dev::clint::_get_mtime()}));
-    tmper_log(&String::from("Terminated."));
-    // power::shutdown();
+fn hjk_task() {
+    loop {
+        let w = uart::Uart::get().readc();
+        unsafe {
+            if (w == 'y' as u8) {
+
+                if (PO < 100) {
+                    PO += 1
+                }
+
+            } else {
+                if (PO > 0) {
+                    PO -= 1
+                }
+            }
+        }
+    }
 }

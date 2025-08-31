@@ -4,6 +4,8 @@
 #![test_runner(test)]
 #![feature(custom_test_frameworks)]
 #![feature(decl_macro)]
+#![feature(exclusive_wrapper)]
+#![feature(generic_atomic)]
 extern crate alloc;
 
 use alloc::string::ToString;
