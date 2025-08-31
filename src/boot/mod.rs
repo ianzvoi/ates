@@ -34,6 +34,14 @@ extern "C" fn _start_utils() -> !{
     let stack2 : u32;
     let stack3 : u32;
     let stack4 : u32;
+    
+    loop {
+        let w = uart::Uart::get().readc();
+        uart::Uart::get().writec(w);
+        if(w == 'y' as u8){
+            break;
+        }
+    }
 
     unsafe {
         asm!(

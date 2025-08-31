@@ -28,9 +28,16 @@ impl Uart {
         // not implemented.
     }
 
-    pub fn readc(& self) -> (u8, u8){
-        ('a' as u8, 0)
-        // not implemented.
+    pub fn readc(& self) -> u8{
+        unsafe {
+            loop {
+                let st = core::ptr::read_volatile(self.fifo.offset(5)); 
+                if(st & 1 == 1){
+                    break;
+                }
+            }
+            core::ptr::read_volatile(self.fifo)
+        }
     }
 }
 
@@ -38,13 +45,13 @@ pub fn init(){
 
     unsafe {
         core::ptr::write_volatile(UART_BASE.offset(1), 0b001);
-        //IER - Receive interrupt only.
+        //IIR - Receive interrupt only.
 
-        core::ptr::write_volatile(UART_BASE.offset(2), 0b001);
-        //IIR - TransmitterHolding Register empty.
+        core::ptr::write_volatile(UART_BASE.offset(2), 0b110);
+        //FCR - clear transmission and recv
 
-        core::ptr::write_volatile(UART_BASE.offset(3), 0b11);
-        //FCR - 8 byte mode & clear recieve register.
+        core::ptr::write_volatile(UART_BASE.offset(3), 0b00000011);
+        //LCR - 8 byte mode & clear recieve register.
     }
 }
 
