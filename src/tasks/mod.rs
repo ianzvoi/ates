@@ -6,7 +6,7 @@ pub mod locks;
 
 use alloc::collections::VecDeque;
 use core::arch::{asm, global_asm};
-use crate::tasks::csr::mie::{csr_mie_set,MIE_TIMER_INT};
+use crate::tasks::csr::mie::{csr_mie_set, MIE_SOFT_INT, MIE_TIMER_INT};
 use crate::tasks::csr::mscratch::csr_mscratch_write;
 
 #[repr(C)]
@@ -97,7 +97,7 @@ pub fn start_routing() {
         )
     }
 
-    csr_mie_set!(MIE_TIMER_INT);
+    csr_mie_set!(MIE_TIMER_INT|MIE_SOFT_INT);
 
     unsafe {
         csr_mscratch_write!(&READY[0]);
