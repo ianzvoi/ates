@@ -12,6 +12,7 @@ use alloc::format;
 use alloc::string::{String};
 use core::arch::{asm, global_asm};
 use crate::{dev::power, dev::uart, tasks, mem, dev};
+use crate::dev::power::shutdown;
 use crate::dev::uart::Uart;
 
 global_asm!(include_str!("boot.s"));
@@ -64,27 +65,28 @@ use crate::tasks::locks::naive::{naive_lock, naive_unlock, NaiveLock};
 
 
 fn tmper_log(p : &String){
-    tasks::locks::naive::naive_lock!(LOG_LOCK);
 
     uart::Uart::get().write(b"[info] ", 7);
     uart::Uart::get().write(p.as_bytes(), p.len());
     uart::Uart::get().writec('\n' as u8);
 
-    tasks::locks::naive::naive_unlock!(LOG_LOCK);
 }
 
 
-crate::tasks::locks::naive::naive!(LOG_LOCK);
+use crate::tasks::locks::mutexnaive::{mutexnaive, mutexnaive_lock, mutexnaive_unlock};
+use crate::tasks::locks::ticket::{ticket, ticket_lock, ticket_unlock, TicketLock};
+
+static mut MW : TicketLock = TicketLock{next_ticket : 0, now_serving: 0};
+
 
 static mut PO : i32 = 12;
 static MOTS: [&str; 4] = ["howdy","snoop!","Galonbo!","bonjour."];
-
 static mut RENDER_MOT : i32 = 0;
 fn renderer() {
     loop{
         unsafe {
+            ticket_lock!(MW);
             let cPO = PO;
-
 
 
             let mut s : String = String::from("");
@@ -102,6 +104,8 @@ fn renderer() {
             RENDER_MOT = (RENDER_MOT + 1) % 4000;
 
             Uart::get().writec('\r' as u8);
+            ticket_unlock!(MW);
+
         }
     }
 }
@@ -110,17 +114,22 @@ fn hjk_task() {
     loop {
         let w = uart::Uart::get().readc();
         unsafe {
-            if (w == 'y' as u8) {
+            ticket_lock!(MW);
+            
+            if (w == 'd' as u8) {
 
                 if (PO < 100) {
                     PO += 1
                 }
 
-            } else {
+            } else if( w == 'a' as u8){
                 if (PO > 0) {
                     PO -= 1
                 }
+            } else if( w == 'q' as u8){
+                shutdown();
             }
+            ticket_unlock!(MW);
         }
     }
 }
