@@ -1,4 +1,18 @@
-use core::sync::atomic::AtomicU16;
+//! # Ticket Lock.
+//! A fairness lock. 
+//! 
+//! Usage:
+//! ```
+//!  naive::ticket!(MY_LOCK);
+//!
+//!  fn sensitive_function(){
+//!     ticket_lock!(MY_LOCK);
+//!
+//!     /* access memory protected by the lock */
+//!
+//!     ticket_unlock!(MY_LOCK);
+//! }
+//! ```
 
 pub struct TicketLock {
     pub(crate) next_ticket: u32,
@@ -39,6 +53,8 @@ pub macro ticket_unlock ($lock:tt) {
     }
 }
 
+
+//TODO: `TicketLock` structure is not globaly accessible when imported.
 pub macro ticket ($lock:tt) {
     static mut tt : TicketLock = TicketLock{next_ticket : 0, now_serving: 0}:
 }

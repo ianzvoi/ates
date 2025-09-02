@@ -2,7 +2,7 @@
 //! 
 //! Usage:
 //! ```
-//!  naive::naive!(MY_LOCK);
+//!  naive::mutexnaive!(MY_LOCK);
 //! 
 //!  fn sensitive_function(){
 //!     naive::mutexnaive_lock!(MY_LOCK);
