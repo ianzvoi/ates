@@ -59,7 +59,7 @@ extern "C" fn _start_utils() -> !{
         )
     }
 
-    tasks::create_task(renderer,stack1);
+    tasks::create_task(command_getter, stack1);
     tasks::create_task(vga_screen,stack2);
     tasks::create_task(hjk_task,stack3);
 
@@ -86,35 +86,20 @@ use crate::tasks::syscall::oslib::getinst;
 use crate::tasks::syscall::time::spin_timer;
 
 
-fn renderer() {
-    
-    loop{
-        spin_timer(1090025);
-        unsafe {
-            let time : u32;
-            asm!(
-                "lw {}, _clint_mtimecmpr",
-                out(reg) time
-            );
-            let fmt_word = format!("{}[?25lThe instruction of next task: {:x}\r",0o33 as char,getinst());
-            Uart::get().write(fmt_word.as_bytes(),fmt_word.len());
-        }
-    }
-}
 
 
-
+type PoType = u32;
 static mut MW : TicketLock = TicketLock{next_ticket : 0, now_serving: 0};
-static mut PO : i32 = 12;
+static mut PO : PoType = 12;
 
-fn PO_w(w : i32){
+fn PO_w(w : PoType){
     ticket_lock!(MW);
     unsafe { PO = w; }
     ticket_unlock!(MW);
 }
 
-fn PO_r() -> i32 {
-    let w : i32;
+fn PO_r() -> PoType {
+    let w : PoType;
     ticket_lock!(MW);
     unsafe { w = PO; }
     ticket_unlock!(MW);
@@ -124,13 +109,17 @@ fn PO_r() -> i32 {
 fn hjk_task() {
     loop {
         let w = Uart::get().readc();
-        if w == 'd' as u8 {
-            PO_w(PO_r() + 1);
-        } else if w == 'a' as u8 {
-            PO_w(PO_r() - 1);
-        } else if w == 'q' as u8 {
+        if w == 'q' as u8 {
             shutdown();
         }
+    }
+}
+
+
+fn command_getter() {
+    loop{
+        spin_timer(720000);
+        PO_w(unsafe {getinst()});
     }
 }
 
@@ -140,7 +129,7 @@ fn vga_screen() {
         VGAScreen::get().write(i, 0x0600 | ((MOTO.as_bytes()[i] & 0xff) as u8) as u16);
     }
     loop {
-        let eo = format!("{}", PO_r());
+        let eo = format!("Curri $PC Moya: {:8x}", PO_r());
         // VGAScreen::get().setcursor((eo.len() + 300) as u16);
         for i in 0..eo.len() {
             VGAScreen::get().write(i + 300, 
