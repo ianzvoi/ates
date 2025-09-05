@@ -100,7 +100,6 @@ pub unsafe extern "C" fn it_handler() {
                     
                     "lw  t1, 140(t0) #[t1 <- next tcb]",
                     "lw  t1, 136(t1) #[t1 <- mepc of next tcb]",
-                    "lw  t1, (t1)",
                     "sw  t1, 92(t0)  #[a0 of my tcb <- t1]",
                     );
                     return;
