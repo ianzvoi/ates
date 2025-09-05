@@ -34,13 +34,10 @@
 
 ##### 并发安全：
 
-(回旋锁)
 * **TODO**:(取代`linked_list_allocator`第三方Crate内置回旋锁.)
 * Naive Lock
 * Ticket Lock
 
-(互斥锁)
-* Naive Mutex Lock
 
 ##### 外设
 - CLINT (这或许不算是外设了)
@@ -57,6 +54,7 @@
 ### More **TODO**s
 
 [//]: # (期望目标)
+- Kernel Dbger
 - 让Task可以拥有单独的堆.
 - 把内存安全措施和RUST的内存安全措施整合.
 - 实现软时钟，和 `scheduled_sleep` 功能.
