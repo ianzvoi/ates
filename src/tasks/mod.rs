@@ -3,6 +3,7 @@ mod coop;
 #[macro_use]
 mod csr;
 pub mod locks;
+pub mod syscall;
 
 use alloc::collections::VecDeque;
 use core::arch::{asm, global_asm};
@@ -79,7 +80,7 @@ pub fn start_routing() {
 
     unsafe {
         asm!(
-            "la t1, _clinr_mtime",
+            "la t1, _clint_mtime",
             "lw t0, (t1)",
 
             "add t0, t0, {delta_init}",
