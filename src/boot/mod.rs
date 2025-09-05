@@ -69,7 +69,6 @@ extern "C" fn _start_utils() -> !{
 }
 
 
-use crate::tasks::locks::naive::{naive_lock, naive_unlock, NaiveLock};
 
 
 
@@ -82,18 +81,11 @@ fn tmper_log(p : &String){
 }
 
 
-use crate::tasks::locks::ticket::{ticket, ticket_lock, ticket_lock_yield, ticket_unlock, TicketLock};
+use crate::tasks::locks::ticket::{ticket_lock, ticket_unlock, TicketLock};
 use crate::tasks::syscall::oslib::getinst;
 use crate::tasks::syscall::time::spin_timer;
 
-static mut MW : TicketLock = TicketLock{next_ticket : 0, now_serving: 0};
 
-
-
-
-static mut PO : i32 = 12;
-static MOTS: [&str; 4] = ["howdy","snoop!","Galonbo!","bonjour."];
-static mut RENDER_MOT : i32 = 0;
 fn renderer() {
     
     loop{
@@ -111,27 +103,34 @@ fn renderer() {
 }
 
 
+
+static mut MW : TicketLock = TicketLock{next_ticket : 0, now_serving: 0};
+static mut PO : i32 = 12;
+
+fn PO_w(w : i32){
+    ticket_lock!(MW);
+    unsafe { PO = w; }
+    ticket_unlock!(MW);
+}
+
+fn PO_r() -> i32 {
+    let w : i32;
+    ticket_lock!(MW);
+    unsafe { w = PO; }
+    ticket_unlock!(MW);
+    w
+}
+
 fn hjk_task() {
     loop {
-
-        let w = uart::Uart::get().readc();
-        ticket_lock_yield!(MW);
-        unsafe {
-            if (w == 'd' as u8) {
-
-                if (PO < 100) {
-                    PO += 1
-                }
-
-            } else if( w == 'a' as u8){
-                if (PO > 0) {
-                    PO -= 1
-                }
-            } else if( w == 'q' as u8){
-                shutdown();
-            }
+        let w = Uart::get().readc();
+        if w == 'd' as u8 {
+            PO_w(PO_r() + 1);
+        } else if w == 'a' as u8 {
+            PO_w(PO_r() - 1);
+        } else if w == 'q' as u8 {
+            shutdown();
         }
-        ticket_unlock!(MW);
     }
 }
 
@@ -141,15 +140,11 @@ fn vga_screen() {
         VGAScreen::get().write(i, 0x0600 | ((MOTO.as_bytes()[i] & 0xff) as u8) as u16);
     }
     loop {
-        for k in 'a'..'z'{
-            VGAScreen::get().setcursor(k as u16 % MOTO.len() as u16);
-
-            for i in 0..40 {
-                VGAScreen::get().write(i + 100, 0x0600 | ((k as u8 & 0xff) + i as u8) as u16)
-            }
-            for i in 0..40 {
-                VGAScreen::get().write(i + 200, 0x0600 | ((k as u8 & 0xff) + i as u8) as u16)
-            }
+        let eo = format!("{}", PO_r());
+        // VGAScreen::get().setcursor((eo.len() + 300) as u16);
+        for i in 0..eo.len() {
+            VGAScreen::get().write(i + 300, 
+                                   0x0600 | (eo.as_bytes()[i]  & 0xff) as u16)
         }
     }
 }
