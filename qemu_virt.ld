@@ -6,7 +6,7 @@ ENTRY(_start)
 /* devices addresses */
 _clint_addr = 0x2000000;
 _clint_mtimecmpr = 0x2004000;
-_clinr_mtime = 0x200BFF8;
+_clint_mtime = 0x200BFF8;
 
 _ns_addr    = 0x10000000;
 

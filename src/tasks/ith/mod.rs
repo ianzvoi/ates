@@ -16,13 +16,13 @@ static INT_INTERVAL: usize = 1000;
 
 #[no_mangle]
 pub unsafe extern "C" fn it_handler() {
-    let mut reason: u32;
+    let reason: u32;
     asm!(
         "csrr {reason} ,mcause",
         reason = out(reg) reason,
     );
-
-    if (reason & 0b10000000000000000000000000000000u32) != 0 {
+    
+    if (reason & 0x80000000u32) != 0 {
         // Interrupt
         if (reason & 0b111u32) == 0b111u32 {
 
@@ -40,17 +40,21 @@ pub unsafe extern "C" fn it_handler() {
             );
 
             asm!(
-            "la t1, _clinr_mtime",
+            "la t1, _clint_mtime",
             "lw t0, (t1)",
             "add t0, t0, {delta}",
             "la t1, _clint_mtimecmpr",
             "sw t0, (t1)",
             delta = in(reg) INT_INTERVAL
             );
+            
+            return;
         }
+        
     } else {
+        // todo : recognize the syscall type and parameter.
         if(reason == 11u32){
-
+            
             asm!(
             "csrr t0,  mscratch",
             // save mepc to current TCB;
@@ -61,11 +65,13 @@ pub unsafe extern "C" fn it_handler() {
             // load mscratch, mepc form TCB pointed by t0
             "csrw mscratch, t0",
             "lw   t1,  136(t0)",
+            // jumpover ecall
+            "addi t1, t1,  4",
             "csrw mepc, t1"
             );
 
             asm!(
-            "la t1, _clinr_mtime",
+            "la t1, _clint_mtime",
             "lw t0, (t1)",
             "add t0, t0, {delta}",
             "la t1, _clint_mtimecmpr",
