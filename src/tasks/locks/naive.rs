@@ -53,6 +53,27 @@ pub macro naive_lock ($lock:tt) {
     }
 }
 
+
+pub macro naive_lock_yield ($lock:tt) {
+    unsafe {
+        use core::arch::asm;
+        asm!(
+            "1:",
+            "mv t2, {lk}",
+            "li t1, 1",
+            "amoswap.w t1, t1, (t2)",
+            "beqz t1, 2f",
+            
+            "mv t0, zero",
+            "ecall",
+            
+            "J 1b",
+            "2:",
+            lk = in(reg) &raw mut $lock,
+        )
+    }
+}
+
 /// same as `naive_lock`
 /// 
 /// but this one won't freaze cpu.

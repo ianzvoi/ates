@@ -40,6 +40,29 @@ pub macro ticket_lock($lock:tt) {
     }
 }
 
+pub macro ticket_lock_yield($lock:tt) {
+    unsafe {
+        use core::arch::asm;
+        /// t1 : ticket moya.
+        /// t2 : ticket serving.
+        asm!(
+            "mv t3, {lk}",
+            "li t1, 1",
+            "amoadd.w t1, t1, (t3)",
+            "1:",
+            "lhu t2, 4(t3)",
+            "beq t1, t2, 2f",
+            
+            "mv t0, zero",
+            "ecall",
+            
+            "J 1b",
+            "2:",
+            lk = in(reg) &raw mut $lock
+        )
+    }
+}
+
 pub macro ticket_unlock ($lock:tt) {
     unsafe {
         use core::arch::asm;
@@ -48,7 +71,7 @@ pub macro ticket_unlock ($lock:tt) {
             "c.addi t0, 4",
             "li t1, 1",
             "amoadd.w zero, t1, (t0)",
-            lk = in(reg) &raw mut $lock,    
+            lk = in(reg) &raw mut $lock,
         )
     }
 }
