@@ -30,7 +30,7 @@ pub macro ticket_lock($lock:tt) {
             "li t1, 1",
             "amoadd.w t1, t1, (t0)",
             "1:",
-            "lhu t2, 4(t0)",
+            "lw t2, 4(t0)",
             "beq t1, t2, 2f",
             "wfi",
             "J 1b",
@@ -50,12 +50,12 @@ pub macro ticket_lock_yield($lock:tt) {
             "li t1, 1",
             "amoadd.w t1, t1, (t3)",
             "1:",
-            "lhu t2, 4(t3)",
+            "lw t2, 4(t3)",
             "beq t1, t2, 2f",
-            
+
             "mv t0, zero",
             "ecall",
-            
+
             "J 1b",
             "2:",
             lk = in(reg) &raw mut $lock
