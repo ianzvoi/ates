@@ -8,12 +8,16 @@
 //!    init allocator,
 //!   init task manager,
 
+use alloc::fmt::format;
 use alloc::format;
 use alloc::string::{String};
 use core::arch::{asm, global_asm};
+use core::ptr::write;
 use crate::{dev::power, dev::uart, tasks, mem, dev};
+use crate::dev::pci::scan_pci_devices;
 use crate::dev::power::shutdown;
 use crate::dev::uart::Uart;
+use crate::dev::vga::VGAScreen;
 
 global_asm!(include_str!("boot.s"));
 
@@ -36,8 +40,12 @@ extern "C" fn _start_utils() -> !{
     let stack3 : u32;
     let stack4 : u32;
 
+    scan_pci_devices();
+    VGAScreen::get().init();
 
-
+    
+    
+    
     unsafe {
         asm!(
             "la {}, _task1_debug_stack_top",
@@ -52,6 +60,7 @@ extern "C" fn _start_utils() -> !{
     }
 
     tasks::create_task(renderer,stack1);
+    tasks::create_task(vga_screen,stack2);
     tasks::create_task(hjk_task,stack3);
 
     tasks::start_routing();
@@ -73,49 +82,41 @@ fn tmper_log(p : &String){
 }
 
 
-use crate::tasks::locks::mutexnaive::{mutexnaive, mutexnaive_lock, mutexnaive_unlock};
-use crate::tasks::locks::ticket::{ticket, ticket_lock, ticket_unlock, TicketLock};
+use crate::tasks::locks::ticket::{ticket, ticket_lock, ticket_lock_yield, ticket_unlock, TicketLock};
+use crate::tasks::syscall::oslib::getinst;
+use crate::tasks::syscall::time::spin_timer;
 
 static mut MW : TicketLock = TicketLock{next_ticket : 0, now_serving: 0};
+
+
 
 
 static mut PO : i32 = 12;
 static MOTS: [&str; 4] = ["howdy","snoop!","Galonbo!","bonjour."];
 static mut RENDER_MOT : i32 = 0;
 fn renderer() {
+    
     loop{
+        spin_timer(1090025);
         unsafe {
-            ticket_lock!(MW);
-            let cPO = PO;
-
-
-            let mut s : String = String::from("");
-            for i in 0..cPO {
-                s.push('.');
-            }
-            s.push('#');
-            for i in cPO..100 {
-                s.push('.');
-            }
-
-            let wors = format!("{}[?25l[{:3}][{}][{:10}][{:4}]",0o33 as char, cPO,s,MOTS[(RENDER_MOT / 1000) as usize],RENDER_MOT);
-            Uart::get().write(wors.as_bytes(), wors.len());
-
-            RENDER_MOT = (RENDER_MOT + 1) % 4000;
-
-            Uart::get().writec('\r' as u8);
-            ticket_unlock!(MW);
-
+            let time : u32;
+            asm!(
+                "lw {}, _clint_mtimecmpr",
+                out(reg) time
+            );
+            let fmt_word = format!("{}[?25lThe instruction of next task: {:x}\r",0o33 as char,getinst());
+            Uart::get().write(fmt_word.as_bytes(),fmt_word.len());
         }
     }
 }
 
+
 fn hjk_task() {
     loop {
+
         let w = uart::Uart::get().readc();
+        ticket_lock_yield!(MW);
         unsafe {
-            ticket_lock!(MW);
-            
             if (w == 'd' as u8) {
 
                 if (PO < 100) {
@@ -129,7 +130,26 @@ fn hjk_task() {
             } else if( w == 'q' as u8){
                 shutdown();
             }
-            ticket_unlock!(MW);
+        }
+        ticket_unlock!(MW);
+    }
+}
+
+fn vga_screen() {
+    const MOTO: &'static str = "Blinky Texts: ";
+    for i in 0..MOTO.len() {
+        VGAScreen::get().write(i, 0x0600 | ((MOTO.as_bytes()[i] & 0xff) as u8) as u16);
+    }
+    loop {
+        for k in 'a'..'z'{
+            VGAScreen::get().setcursor(k as u16 % MOTO.len() as u16);
+
+            for i in 0..40 {
+                VGAScreen::get().write(i + 100, 0x0600 | ((k as u8 & 0xff) + i as u8) as u16)
+            }
+            for i in 0..40 {
+                VGAScreen::get().write(i + 200, 0x0600 | ((k as u8 & 0xff) + i as u8) as u16)
+            }
         }
     }
 }
