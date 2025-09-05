@@ -11,11 +11,12 @@ rustflags = [
 runner = """
 qemu-system-riscv32
   -cpu rv32,c=true
+  -display gtk
   -machine virt
   -m 150M
   -s
-  -nographic
   -serial mon:stdio
+  -device VGA
   -bios
 """
 
