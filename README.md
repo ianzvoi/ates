@@ -26,10 +26,10 @@
 (目前暂时借用`linked_list_allocator`第三方Crate的实现.)
 
 
-##### 多线程：
+##### 多线程调度：
 * 定时器产生等时间间隔中断, 抢占线程调度.
 * 协作进程调度(**TODO**:协作调度的调度器.)
-
+* TODO: RMS调度()
 
 ##### 并发安全：
 
@@ -53,12 +53,20 @@
 ### More **TODO**s
 
 [//]: # (期望目标)
-- Kernel Dbger
-- 让Task可以拥有单独的堆.
-- 把内存安全措施和RUST的内存安全措施整合.
-- 实现软时钟，和 `scheduled_sleep` 功能.
+- Better Kernel Dbger.
+
+- 完善线程管理
 - 实现 `mutex_lock`.
+
+- Timers Manager.
+- RMS 调度算法.
+
+- 自己的 Allocator.
+- 让Task可以拥有单独的堆.
+
+- 把内存安全措施和RUST的内存安全措施整合.
 - 让 `naive_lock` 可被动态分配.
+
 - 移植到 xuantie-C910 物理机上. 
 
 [//]: # (额外目标)
