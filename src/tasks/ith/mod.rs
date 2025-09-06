@@ -15,13 +15,13 @@ static INT_INTERVAL: usize = 1000;
 
 
 
-//! # Explanation:
-//! - 1st:higher word 
-//! - 2nd:lower word
-//! 
-//! Always larger if no timer carry-over happens between reading two words.
-//! 
-//! If carry-over happens, discard the smaller one.
+// # Explanation:
+// - 1st:higher word 
+// - 2nd:lower word
+// 
+// Always larger if no timer carry-over happens between reading two words.
+//
+// If carry-over happens, discard the smaller one.
 macro_rules! timer_add {
 
     () => {
@@ -34,12 +34,9 @@ macro_rules! timer_add {
         "lw t3, (t0)",  // low
 
         // store the larger.
+        "bgtu t2, t4, 2f",
         "bltu t2, t4, 1f",
-        "beq t2, t5, 3f",
-        "J 2f",
-        "3:",
-        "bltu t1, t3, 1f",
-        "J 2f",
+        "bgtu t1, t3, 2f",
         "1:",
         "mv t2, t4",
         "mv t1, t3",
@@ -55,10 +52,12 @@ macro_rules! timer_add {
         "la t0, _clint_mtimecmpr",
         "sw t3, (t0)",
         "sw t2, 4(t0)",
+        
         delta = in(reg) INT_INTERVAL
         );
     }
 }
+
 
 #[no_mangle]
 pub unsafe extern "C" fn it_handler() {
@@ -117,7 +116,7 @@ pub unsafe extern "C" fn it_handler() {
                     );
 
 
-                    timer_add!();
+                   timer_add!();
                     
                     return;
                 }
