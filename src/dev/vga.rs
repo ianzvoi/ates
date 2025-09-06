@@ -241,8 +241,10 @@ impl VGAScreen {
             // Self::vga_misc_msk(0x22,0x22);
         }
     }
-
-
+    
+    
+    /// 8x16 Font Binary from `Bootin Bios firmware`.
+    /// https://elixir.bootlin.com/coreboot/4.4/source/src/drivers/pc80/vga/vga_font_8x16.c
     const DEFAULT_FONT: [[u8;16];256] = [
         [ /* 0 0x00 '^@' */
             0x00, /* 00000000 */
