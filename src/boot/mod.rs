@@ -128,12 +128,52 @@ fn vga_screen() {
     for i in 0..MOTO.len() {
         VGAScreen::get().write(i, 0x0600 | ((MOTO.as_bytes()[i] & 0xff) as u8) as u16);
     }
+
     loop {
-        let eo = format!("Curri $PC Moya: {:8x}", PO_r());
+        let eo = format!(" Curri $PC Moya: {:8x} ",PO_r());
+
+        let text_msk = 0x6f00u16;
+        let text_msk_highlight = 0x6800u16;
+        let text_bias = 205;
         // VGAScreen::get().setcursor((eo.len() + 300) as u16);
         for i in 0..eo.len() {
-            VGAScreen::get().write(i + 300, 
-                                   0x0600 | (eo.as_bytes()[i]  & 0xff) as u16)
+            VGAScreen::get().write(i + text_bias + 100 + 1,
+                                   text_msk_highlight| (eo.as_bytes()[i]  & 0xff) as u16)
+        }
+        static mut FIRST : bool = true;
+        unsafe {
+            if FIRST {
+
+                VGAScreen::get().write(text_bias,
+                                       text_msk | 0xc9 );
+                for i in 0..eo.len() {
+                    VGAScreen::get().write(text_bias + i + 1,
+                                           text_msk | 0xcd );
+                }
+                VGAScreen::get().write(0 + text_bias + eo.len() + 1,
+                                       text_msk | 0xbb);
+
+
+                VGAScreen::get().write(text_bias + 100,
+                                       text_msk | 0xba );
+                VGAScreen::get().write(text_bias + 100,
+                                       text_msk | 0xba );
+                VGAScreen::get().write(text_bias + 100 + eo.len() + 1,
+                                       text_msk | 0xba );
+
+
+                VGAScreen::get().write(0 + text_bias + 200,
+                                       text_msk | 0xc8 );
+                for i in 0..eo.len() {
+                    VGAScreen::get().write(text_bias + 200 + i + 1,
+                                           text_msk | 0xcd );
+                }
+                VGAScreen::get().write(0 + text_bias + 200 + eo.len() + 1,
+                                       text_msk | 0xbc );
+
+
+                FIRST = false;
+            };
         }
     }
 }
